@@ -48,6 +48,34 @@ export default function App() {
     setIsLoading(true);
 
     try {
+      const response = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input })
+      });
+      const data = await response.json();
+      
+      const botMsg: Message = { 
+        role: 'bot', 
+        content: data.reply,
+        sources: data.sources
+      };
+      setMessages(prev => [...prev, botMsg]);
+    } catch (error) {
+      console.error("Erreur API", error);
+      // Fallback in case the backend is not running yet
+      setTimeout(() => {
+        const dummyBotMsg: Message = { 
+          role: 'bot', 
+          content: 'L\'API backend n\'est pas connectée. Assurez-vous que FastAPI tourne sur `http://localhost:8000` et que vous avez renseigné votre clé OpenAI.',
+          sources: [] 
+        };
+        setMessages(prev => [...prev, dummyBotMsg]);
+      }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
       // APPEL VERS VOTRE BACKEND FASTAPI (Ajustez le port si besoin)
       const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
