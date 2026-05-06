@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 langchain
-langchain-openai
+langchain-google-genai
 langchain-chroma
 pydantic
 langchain-community

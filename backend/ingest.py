@@ -2,10 +2,10 @@ import os
 import glob
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 
-os.environ["OPENAI_API_KEY"] = "sk-votre-cle-openai"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyAI6bj411QOU-wAU7a7wOxkjbfbI8hoMUM"
 
 def ingest_pdf(file_path):
     print(f"Chargement de {file_path}...")
@@ -18,7 +18,7 @@ def ingest_pdf(file_path):
     print("Création des vecteurs et sauvegarde dans Chroma...")
     Chroma.from_documents(
         documents=splits,
-        embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+        embedding=GoogleGenerativeAIEmbeddings(model="models/text-embedding-004"),
         persist_directory="./chroma_db"
     )
     print("Terminé !")

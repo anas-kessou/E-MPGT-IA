@@ -2,14 +2,14 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 
 # Configuration (Mettez votre clé dans un .env en réalité)
-os.environ["OPENAI_API_KEY"] = "sk-votre-cle-openai"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyVotreCleGeminiIci..."
 
 app = FastAPI(title="MVP IA BTP")
 
@@ -22,9 +22,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. Initialisation IA
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+# 1. Initialisation IA avec GEMINI
+embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash", 
+    temperature=0,
+    # Optionnel: baisser les filtres de sécurité pour le BTP
+    safety_settings={
+        "HARASSMENT": "BLOCK_NONE",
+        "HATE_SPEECH": "BLOCK_NONE",
+        "SEXUALLY_EXPLICIT": "BLOCK_NONE",
+        "DANGEROUS_CONTENT": "BLOCK_NONE",
+    }
+)
 
 # Connecter Chroma (assurez-vous d'avoir ingéré des données avant dans "./chroma_db")
 vector_store = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
