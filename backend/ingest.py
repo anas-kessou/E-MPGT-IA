@@ -18,7 +18,7 @@ def ingest_pdf(file_path):
     print("Création des vecteurs et sauvegarde dans Chroma...")
     Chroma.from_documents(
         documents=splits,
-        embedding=GoogleGenerativeAIEmbeddings(model="models/text-embedding-004"),
+        embedding=GoogleGenerativeAIEmbeddings(model="text-embedding-001"),
         persist_directory="./chroma_db"
     )
     print("Terminé !")

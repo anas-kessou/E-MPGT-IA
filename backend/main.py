@@ -4,12 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains.retrieval import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 
 # Configuration (Mettez votre clé dans un .env en réalité)
-os.environ["GOOGLE_API_KEY"] = "AIzaSyVotreCleGeminiIci..."
+os.environ["GOOGLE_API_KEY"] = "AIzaSyAI6bj411QOU-wAU7a7wOxkjbfbI8hoMUM"
 
 app = FastAPI(title="MVP IA BTP")
 
@@ -23,18 +23,18 @@ app.add_middleware(
 )
 
 # 1. Initialisation IA avec GEMINI
-embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-001")
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash", 
     temperature=0,
-    # Optionnel: baisser les filtres de sécurité pour le BTP
-    safety_settings={
-        "HARASSMENT": "BLOCK_NONE",
-        "HATE_SPEECH": "BLOCK_NONE",
-        "SEXUALLY_EXPLICIT": "BLOCK_NONE",
-        "DANGEROUS_CONTENT": "BLOCK_NONE",
-    }
+    # # Optionnel: baisser les filtres de sécurité pour le BTP
+    # safety_settings={
+    #     "HARASSMENT": "BLOCK_NONE",
+    #     "HATE_SPEECH": "BLOCK_NONE",
+    #     "SEXUALLY_EXPLICIT": "BLOCK_NONE",
+    #     "DANGEROUS_CONTENT": "BLOCK_NONE",
+    # }
 )
 
 # Connecter Chroma (assurez-vous d'avoir ingéré des données avant dans "./chroma_db")

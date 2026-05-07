@@ -13,8 +13,9 @@
 
 ## 🎯 Objectif du Projet
 
-Dans le secteur du BTP, l'information (DTU, normes NF, comptes rendus de chantier, fiches techniques) est dispersée et non structurée. 
+Dans le secteur du BTP, l'information (DTU, normes NF, comptes rendus de chantier, fiches techniques) est dispersée et non structurée.
 **Notre solution** est un système d'Intelligence Artificielle à 3 couches capable de :
+
 1. **Centraliser** toutes les données BTP.
 2. **Intégrer** la connaissance métier stricte sans hallucination (RAG sourcé).
 3. **Automatiser** les décisions et workflows (génération de rapports, alertes de conformité).
@@ -58,7 +59,7 @@ graph TD
 ## ✨ Fonctionnalités Clés (Killer Features)
 
 - 🧠 **RAG (Retrieval-Augmented Generation) Expert** : L'IA ne devine pas, elle lit les documents stockés.
-- 📎 **Citations Strictes** : Chaque réponse réglementaire fournie par l'IA indique la source exacte du document (ex: *DTU 20.1 - Maçonnerie*).
+- 📎 **Citations Strictes** : Chaque réponse réglementaire fournie par l'IA indique la source exacte du document (ex: _DTU 20.1 - Maçonnerie_).
 - ⚡ **Interface Temps Réel** : Une UI fluide en React/Tailwind simulant l'environnement de travail d'un ingénieur ou conducteur de travaux.
 - ⚙️ **Automatisation (Couche 3)** : Connexion possible avec `n8n` pour écouter des requêtes entrantes (ex: un email de non-conformité sur chantier) et générer automatiquement une recommandation basée sur les DTU.
 
@@ -67,32 +68,37 @@ graph TD
 ## 🛠️ Stack Technique
 
 ### Backend (Python)
-* **Framework :** FastAPI (pour sa rapidité et son asynchronisme).
-* **Orchestration IA :** LangChain.
-* **Vector Store :** ChromaDB (choisi pour le MVP local car il ne nécessite pas d'infrastructure lourde contrairerement à pgvector, garantissant un déploiement en 24h).
-* **Modèles (OpenAI) :** `text-embedding-3-small` (pour la vectorisation) et `gpt-4o-mini` (pour le raisonnement).
+
+- **Framework :** FastAPI (pour sa rapidité et son asynchronisme).
+- **Orchestration IA :** LangChain.
+- **Vector Store :** ChromaDB (choisi pour le MVP local car il ne nécessite pas d'infrastructure lourde contrairerement à pgvector, garantissant un déploiement en 24h).
+- **Modèles (OpenAI) :** `text-embedding-3-small` (pour la vectorisation) et `gpt-4o-mini` (pour le raisonnement).
 
 ### Frontend (JavaScript)
-* **Framework :** React.js propulsé par Vite.
-* **Styling :** Tailwind CSS (UI calquée sur la charte graphique E-MPGT : Vert et Bleu marine).
-* **Icônes & Markdown :** Lucide-React & React-Markdown.
+
+- **Framework :** React.js propulsé par Vite.
+- **Styling :** Tailwind CSS (UI calquée sur la charte graphique E-MPGT : Vert et Bleu marine).
+- **Icônes & Markdown :** Lucide-React & React-Markdown.
 
 ---
 
 ## 🚀 Installation & Lancement en Local
 
 ### Prérequis
-* Node.js (v18+)
-* Python (3.10+)
-* Une clé API OpenAI (`OPENAI_API_KEY`)
+
+- Node.js (v18+)
+- Python (3.10+)
+- Une clé API OpenAI (`OPENAI_API_KEY`)
 
 ### 1. Cloner le projet
+
 ```bash
 git clone https://github.com/votre-nom/e-mpgt-ai-btp.git
 cd e-mpgt-ai-btp
 ```
 
 ### 2. Lancer le Backend (API & IA)
+
 ```bash
 cd backend
 # Créer un environnement virtuel
@@ -111,10 +117,13 @@ python ingest.py
 # Lancer le serveur
 uvicorn main:app --reload --port 8000
 ```
-*L'API sera disponible sur : `http://localhost:8000`*
+
+_L'API sera disponible sur : `http://localhost:8000`_
 
 ### 3. Lancer le Frontend (UI)
+
 Ouvrez un nouveau terminal :
+
 ```bash
 cd frontend
 # Installer les dépendances
@@ -123,24 +132,28 @@ npm install
 # Lancer le serveur de développement
 npm run dev
 ```
-*L'interface sera disponible sur : `http://localhost:5173`*
+
+_L'interface sera disponible sur : `http://localhost:5173`_
 
 ---
 
 ## 📂 Structure des Données (Exemple MVP)
 
 Pour ce MVP, la base vectorielle a été entraînée sur des documents métiers publics représentatifs :
-* **Fiches AQC** (Agence Qualité Construction) : Prévention des pathologies et erreurs de chantier.
-* **Extraits de DTU** (Document Technique Unifié) : Règles de l'art pour la construction traditionnelle.
+
+- **Fiches AQC** (Agence Qualité Construction) : Prévention des pathologies et erreurs de chantier.
+- **Extraits de DTU** (Document Technique Unifié) : Règles de l'art pour la construction traditionnelle.
 
 ---
 
 ## 🔭 Évolutions futures (V2 pour la Production)
 
 Étant donné la contrainte de temps (MVP), des raccourcis techniques ont été pris. Pour un passage en production, nous prévoyons :
+
 1. **Migration Base de Données :** Remplacement de ChromaDB par **PostgreSQL 15 + pgvector** avec SQLAlchemy/Alembic pour une robustesse et un filtrage strict par métadonnées (ID Projet, Auteur).
 2. **Parsing Avancé :** Remplacement du loader PDF standard par **Docling** ou **LlamaParse** pour comprendre la structure complexe des tableaux dans les normes NF et devis.
 3. **Agentic Workflows :** Implémentation de LangGraph pour créer des agents IA capables de déclencher des appels API vers des ERP/CRM (ex: Procore, Jira) de manière autonome.
 
 ---
+
 **Développé avec ❤️ pour le Challenge E-MPGT.**
