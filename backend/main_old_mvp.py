@@ -7,9 +7,10 @@ from langchain_chroma import Chroma
 from langchain_classic.chains.retrieval import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
 
-# Configuration (Mettez votre clé dans un .env en réalité)
-os.environ["GOOGLE_API_KEY"] = "AIzaSyAI6bj411QOU-wAU7a7wOxkjbfbI8hoMUM"
+# Charger les variables du fichier .env
+load_dotenv()
 
 app = FastAPI(title="MVP IA BTP")
 
@@ -23,7 +24,7 @@ app.add_middleware(
 )
 
 # 1. Initialisation IA avec GEMINI
-embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-001")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash", 

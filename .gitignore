@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+
+# Environment
+.env
+*.env.local
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Docker volumes
+qdrant_data/
+neo4j_data/
+postgres_data/
+minio_data/
+n8n_data/
+
+# Legacy
+chroma_db/
