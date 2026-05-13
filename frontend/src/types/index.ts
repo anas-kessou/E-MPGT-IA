@@ -60,6 +60,22 @@ export interface DocumentListResponse {
   page_size: number;
 }
 
+// ── Resource Files Types ──────────────────────────────────────────
+
+export interface ResourceFile {
+  filename: string;
+  size_bytes: number;
+  size_display: string;
+  extension: string;
+  ingested: boolean;
+}
+
+export interface ResourceListResponse {
+  resources: ResourceFile[];
+  total: number;
+  directory: string;
+}
+
 // ── Dashboard Types ───────────────────────────────────────────────
 
 export interface SystemHealth {

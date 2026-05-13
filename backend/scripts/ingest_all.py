@@ -25,12 +25,12 @@ def main():
         results = ingest_directory(resources_dir, project_id="demo", project_name="Démo BTP")
         print(f"✅ {len(results)} documents ingested from resources/")
 
-    # Ingest Placo descriptifs
-    placo_dir = os.path.join(base_dir, "Descriptifs_Types_Placo")
+    # Ingest Placo descriptifs (now inside resources/)
+    placo_dir = os.path.join(resources_dir, "Descriptifs_Types_Placo")
     if os.path.exists(placo_dir):
         print(f"\n📁 Ingesting Placo descriptifs from: {placo_dir}")
         results = ingest_directory(placo_dir, project_id="placo-2025", project_name="Descriptifs Placo 2025")
-        print(f"✅ {len(results)} documents ingested from Descriptifs_Types_Placo/")
+        print(f"✅ {len(results)} documents ingested from resources/Descriptifs_Types_Placo/")
 
     print("\n🎉 Bulk ingestion complete!")
 

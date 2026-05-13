@@ -18,12 +18,12 @@ class Settings(BaseSettings):
 
     # ── Google AI / LLM ────────────────────────────────────────
     google_api_key: str = Field(default="")
-    llm_model: str = Field(default="gemini-2.0-flash")
+    llm_model: str = Field(default="gemini-3.1-flash-lite")
     llm_temperature: float = Field(default=0.1)
 
     # ── Embedding ──────────────────────────────────────────────
     embedding_model: str = Field(default="gemini-embedding-001")
-    embedding_dimensions: int = Field(default=3072)
+    embedding_dimensions: int = Field(default=768)
 
     # ── Qdrant ─────────────────────────────────────────────────
     qdrant_host: str = Field(default="localhost")

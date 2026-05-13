@@ -183,7 +183,7 @@ def ingest_file(
             lot=detected_lot,
             date_indexed=datetime.utcnow(),
             criticite=criticite.value,
-            status=DocumentStatus.INDEXED.value,
+            status=metadata.status.value if hasattr(metadata.status, 'value') else str(metadata.status),
             num_pages=len(raw_docs),
             num_chunks=len(enriched_chunks),
             file_size_bytes=metadata.file_size_bytes,

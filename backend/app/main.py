@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.config import get_settings
-from app.routers import chat, documents, knowledge, health, settings as settings_router
+from app.routers import chat, documents, knowledge, health, settings as settings_router, resources
 
 # Load environment variables
 load_dotenv()
@@ -84,6 +84,7 @@ app.include_router(documents.router)
 app.include_router(knowledge.router)
 app.include_router(health.router)
 app.include_router(settings_router.router)
+app.include_router(resources.router)
 
 
 # ── Root Endpoint ──────────────────────────────────────────────────
@@ -97,6 +98,7 @@ async def root():
         "endpoints": {
             "chat": "/api/chat",
             "documents": "/api/documents/",
+            "resources": "/api/resources/",
             "knowledge": "/api/knowledge/overview",
             "health": "/api/health",
             "dashboard": "/api/dashboard/stats",

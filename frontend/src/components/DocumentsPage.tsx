@@ -1,22 +1,46 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Upload, Search, Filter, FileText, Trash2, FolderOpen } from 'lucide-react';
-import { getDocuments, uploadDocument, deleteDocument } from '../api/client';
-import { DocumentItem, DocumentFilters } from '../types';
+import { Upload, Search, Filter, FileText, Trash2, FolderOpen, Database, Play, Loader2, CheckCircle2, HardDrive, Plus } from 'lucide-react';
+import { getDocuments, uploadDocument, deleteDocument, getResources, uploadResource, deleteResource, ingestAllResources, ingestSingleResource } from '../api/client';
+import { DocumentItem, DocumentFilters, ResourceFile } from '../types';
 
 export function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [resources, setResources] = useState<ResourceFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingResources, setLoadingResources] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadingResource, setUploadingResource] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+  const [ingestingFile, setIngestingFile] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [filters, setFilters] = useState<DocumentFilters>({ query: '', type: 'tous' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resourceInputRef = useRef<HTMLInputElement>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // ── Load Resources ────────────────────────────────────────────────
+  const loadResources = useCallback(async () => {
+    setLoadingResources(true);
+    try {
+      const data = await getResources();
+      setResources(data.resources || []);
+    } catch {
+      setResources([]);
+    }
+    setLoadingResources(false);
+  }, []);
+
+  // ── Load Documents ────────────────────────────────────────────────
   const loadDocs = useCallback(async () => {
     try {
       const data = await getDocuments();
       let docs = data.documents || [];
       
-      // Local filtering for MVP (ideally backend)
       if (filters.query || filters.type !== 'tous') {
         docs = docs.filter((d: any) => {
           const matchQuery = !filters.query || d.filename.toLowerCase().includes(filters.query.toLowerCase());
@@ -27,27 +51,22 @@ export function DocumentsPage() {
       
       setDocuments(docs);
     } catch {
-      // Demo data
-      setDocuments([
-        { id: '1', filename: 'DTU 20.1 - Maçonnerie.pdf', document_type: 'dtu', project_name: 'Résidence Vert', lot: 'Gros Œuvre', status: 'indexed', date_indexed: new Date().toISOString(), num_chunks: 45, criticite: 'haute' },
-        { id: '2', filename: 'Fiche AQC - ITE Enduit.pdf', document_type: 'fiche_technique', project_name: null, lot: 'Façade', status: 'indexed', date_indexed: new Date().toISOString(), num_chunks: 12, criticite: 'moyenne' },
-        { id: '3', filename: 'Rapport Qualité 2025.pdf', document_type: 'rapport_chantier', project_name: 'Tour Bleue', lot: null, status: 'indexed', date_indexed: new Date().toISOString(), num_chunks: 78, criticite: 'haute' },
-        { id: '4', filename: 'Cloison Placostil.pdf', document_type: 'fiche_technique', project_name: null, lot: 'Plâtrerie', status: 'indexed', date_indexed: new Date().toISOString(), num_chunks: 8, criticite: 'basse' },
-        { id: '5', filename: 'CCTP Lot Plomberie.pdf', document_type: 'cctp', project_name: 'Résidence Vert', lot: 'Plomberie', status: 'indexed', date_indexed: new Date().toISOString(), num_chunks: 34, criticite: 'haute' },
-      ]);
+      setDocuments([]);
     }
     setLoading(false);
   }, [filters]);
 
-  useEffect(() => { loadDocs(); }, [loadDocs]);
+  useEffect(() => { loadDocs(); loadResources(); }, [loadDocs, loadResources]);
 
+  // ── Document Handlers ─────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
     try {
       await deleteDocument(id);
+      showToast('Document supprimé');
       loadDocs();
-    } catch (err) {
-      alert('Erreur lors de la suppression');
+    } catch {
+      showToast('Erreur lors de la suppression', 'error');
     }
   };
 
@@ -60,6 +79,7 @@ export function DocumentsPage() {
       } catch { /* skip */ }
     }
     setUploading(false);
+    showToast(`${files.length} document(s) uploadé(s)`);
     loadDocs();
   };
 
@@ -69,6 +89,60 @@ export function DocumentsPage() {
     handleUpload(e.dataTransfer.files);
   };
 
+  // ── Resource Handlers ─────────────────────────────────────────────
+  const handleResourceUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingResource(true);
+    for (const file of Array.from(files)) {
+      try {
+        await uploadResource(file);
+      } catch (err: any) {
+        showToast(`Erreur: ${err.message}`, 'error');
+      }
+    }
+    setUploadingResource(false);
+    showToast(`Fichier(s) ajouté(s) aux ressources`);
+    loadResources();
+  };
+
+  const handleResourceDelete = async (filename: string) => {
+    if (!window.confirm(`Supprimer "${filename}" des ressources ?`)) return;
+    try {
+      await deleteResource(filename);
+      showToast('Ressource supprimée');
+      loadResources();
+    } catch {
+      showToast('Erreur lors de la suppression', 'error');
+    }
+  };
+
+  const handleIngestAll = async () => {
+    setIngesting(true);
+    try {
+      const result = await ingestAllResources();
+      showToast(result.message || 'Ingestion terminée');
+      loadResources();
+      loadDocs();
+    } catch (err: any) {
+      showToast(`Erreur: ${err.message}`, 'error');
+    }
+    setIngesting(false);
+  };
+
+  const handleIngestSingle = async (filename: string) => {
+    setIngestingFile(filename);
+    try {
+      const result = await ingestSingleResource(filename);
+      showToast(result.message || `${filename} ingéré`);
+      loadResources();
+      loadDocs();
+    } catch (err: any) {
+      showToast(`Erreur: ${err.message}`, 'error');
+    }
+    setIngestingFile(null);
+  };
+
+  // ── Helpers ───────────────────────────────────────────────────────
   const criticiteBadge = (c: string) => {
     if (c === 'haute' || c === 'critique') return 'badge-red';
     if (c === 'moyenne') return 'badge-amber';
@@ -77,12 +151,150 @@ export function DocumentsPage() {
 
   const typeLabel = (t: string) => t.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
+  const getFileIcon = (ext: string) => {
+    if (ext === '.pdf') return '📄';
+    if (ext === '.docx' || ext === '.doc') return '📝';
+    if (ext === '.xlsx') return '📊';
+    if (ext === '.txt') return '📃';
+    return '📎';
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6 fade-in">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium fade-in ${
+          toast.type === 'success' 
+            ? 'bg-btpGreen/20 text-btpGreen border border-btpGreen/30' 
+            : 'bg-btpRed/20 text-btpRed border border-btpRed/30'
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════
+          SECTION 1: RAG RESOURCES (Knowledge Base Files)
+         ════════════════════════════════════════════════════════════════ */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <HardDrive size={24} className="text-btpCyan" />
+              Ressources RAG
+            </h2>
+            <p className="text-slate-400 mt-1">Fichiers sources de la base de connaissances — {resources.length} fichier{resources.length > 1 ? 's' : ''}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleIngestAll}
+              disabled={ingesting || resources.length === 0}
+              className="btn-secondary flex items-center gap-2 text-sm"
+            >
+              {ingesting ? <Loader2 size={14} className="animate-spin" /> : <Database size={14} />}
+              {ingesting ? 'Ingestion...' : 'Ingérer Tout'}
+            </button>
+            <button
+              onClick={() => resourceInputRef.current?.click()}
+              disabled={uploadingResource}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Plus size={14} />
+              Ajouter
+            </button>
+            <input
+              ref={resourceInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.docx,.txt,.xlsx"
+              className="hidden"
+              onChange={e => handleResourceUpload(e.target.files)}
+            />
+          </div>
+        </div>
+
+        {/* Resources Grid */}
+        {loadingResources ? (
+          <div className="glass-card p-8 text-center">
+            <div className="w-8 h-8 border-2 border-btpCyan border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-sm text-slate-500">Chargement des ressources...</p>
+          </div>
+        ) : resources.length === 0 ? (
+          <div className="glass-card p-8 text-center">
+            <HardDrive size={36} className="text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-400">Aucune ressource trouvée</p>
+            <p className="text-xs text-slate-600 mt-1">Ajoutez des fichiers PDF, DOCX, TXT ou XLSX</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {resources.map((res) => (
+              <div
+                key={res.filename}
+                className="glass-card p-4 glass-card-hover group relative"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl shrink-0 mt-0.5">{getFileIcon(res.extension)}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-white truncate" title={res.filename}>
+                      {res.filename}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-slate-500">{res.size_display}</span>
+                      <span className="text-xs text-slate-700">•</span>
+                      <span className="text-xs text-slate-500 uppercase">{res.extension.replace('.', '')}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      {res.ingested ? (
+                        <span className="badge badge-green text-[10px]">
+                          <CheckCircle2 size={10} /> Ingéré
+                        </span>
+                      ) : (
+                        <span className="badge badge-amber text-[10px]">
+                          En attente
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions overlay */}
+                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!res.ingested && (
+                    <button
+                      onClick={() => handleIngestSingle(res.filename)}
+                      disabled={ingestingFile === res.filename}
+                      className="p-1.5 text-btpCyan hover:bg-btpCyan/10 rounded-lg transition-colors"
+                      title="Ingérer ce fichier"
+                    >
+                      {ingestingFile === res.filename
+                        ? <Loader2 size={14} className="animate-spin" />
+                        : <Play size={14} />
+                      }
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleResourceDelete(res.filename)}
+                    className="p-1.5 text-slate-500 hover:text-btpRed hover:bg-btpRed/10 rounded-lg transition-colors"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-slate-800" />
+
+      {/* ════════════════════════════════════════════════════════════════
+          SECTION 2: INDEXED DOCUMENTS
+         ════════════════════════════════════════════════════════════════ */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Gestion Documentaire</h2>
-          <p className="text-slate-400 mt-1">Upload, indexation et recherche de documents BTP</p>
+          <h2 className="text-2xl font-bold text-white">Documents Indexés</h2>
+          <p className="text-slate-400 mt-1">Documents traités et vectorisés dans le pipeline RAG</p>
         </div>
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -198,7 +410,7 @@ export function DocumentsPage() {
           <div className="p-12 text-center">
             <FolderOpen size={40} className="text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400">Aucun document indexé</p>
-            <p className="text-xs text-slate-600 mt-1">Uploadez votre premier document pour commencer</p>
+            <p className="text-xs text-slate-600 mt-1">Uploadez un document ou ingérez les ressources ci-dessus</p>
           </div>
         )}
       </div>

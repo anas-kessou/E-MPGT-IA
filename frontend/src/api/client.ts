@@ -8,7 +8,8 @@ import type {
   DocumentListResponse, 
   DashboardStats, 
   SystemHealth, 
-  GraphOverview 
+  GraphOverview,
+  ResourceListResponse,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
@@ -57,6 +58,36 @@ export async function deleteDocument(docId: string): Promise<{ message: string }
   return request<{ message: string }>(`/api/documents/${docId}`, { method: 'DELETE' });
 }
 
+// ── Resources (RAG Knowledge Base Files) ──────────────────────────
+
+export async function getResources(): Promise<ResourceListResponse> {
+  return request<ResourceListResponse>('/api/resources/');
+}
+
+export async function uploadResource(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE}/api/resources/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function deleteResource(filename: string): Promise<{ message: string }> {
+  return request<{ message: string }>(`/api/resources/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+}
+
+export async function ingestAllResources(): Promise<any> {
+  return request<any>('/api/resources/ingest', { method: 'POST' });
+}
+
+export async function ingestSingleResource(filename: string): Promise<any> {
+  return request<any>(`/api/resources/ingest/${encodeURIComponent(filename)}`, { method: 'POST' });
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -93,3 +124,4 @@ export async function saveSetting(key: string, value: any): Promise<any> {
     body: JSON.stringify({ key, value }),
   });
 }
+
