@@ -3,6 +3,7 @@ E-MPGT-IA — Centralized Configuration
 All settings loaded from environment variables via Pydantic Settings.
 """
 
+import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 from pydantic import Field
@@ -18,8 +19,9 @@ class Settings(BaseSettings):
 
     # ── Google AI / LLM ────────────────────────────────────────
     google_api_key: str = Field(default="")
-    llm_model: str = Field(default="gemini-3.1-flash-lite")
-    llm_temperature: float = Field(default=0.1)
+    # LLM Settings
+    llm_model: str = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
+    llm_temperature: float = 0.25 # Optimal for technical precision
 
     # ── Embedding ──────────────────────────────────────────────
     embedding_model: str = Field(default="gemini-embedding-001")
@@ -49,8 +51,8 @@ class Settings(BaseSettings):
     minio_secure: bool = Field(default=False)
 
     # ── Chunking ───────────────────────────────────────────────
-    chunk_size: int = Field(default=1000)
-    chunk_overlap: int = Field(default=200)
+    chunk_size: int = Field(default=1800)
+    chunk_overlap: int = Field(default=350)
 
     @property
     def postgres_url(self) -> str:

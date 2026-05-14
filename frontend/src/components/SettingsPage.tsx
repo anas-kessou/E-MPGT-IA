@@ -7,15 +7,13 @@ export function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<AppSettings>({
-    llmModel: 'gemini-2.0-flash',
-    temperature: 0.1,
-    embeddingModel: 'text-embedding-004',
-    chunkSize: 1000,
-    chunkOverlap: 200,
-    topK: 5
-  });
-
-  useEffect(() => {
+    llmModel: 'gemini-3.1-flash-lite',
+    temperature: 0.2,
+    embeddingModel: 'text-embedding-001',
+    chunkSize: 1800,
+    chunkOverlap: 350,
+    topK: 10
+  }); useEffect(() => {
     async function load() {
       try {
         const persisted = await getAllSettings();
@@ -64,25 +62,25 @@ export function SettingsPage() {
             <Settings size={16} className="text-btpGreen" />
             Intelligence Artificielle
           </h3>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-xs text-slate-400 font-medium block mb-1.5">Modèle LLM Principal</label>
-              <select 
-                className="input-dark w-full" 
+              <select
+                className="input-dark w-full"
                 value={settings.llmModel}
                 onChange={e => setSettings(prev => ({ ...prev, llmModel: e.target.value }))}
               >
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash (Recommandé)</option>
+                <option value="gemini-3.1-flash-lite">gemini 3.1 flash lite (Recommandé)</option>
                 <option value="gemini-1.5-pro">Gemini 1.5 Pro (Haute Qualité)</option>
                 <option value="gpt-4o">GPT-4o (Azure OpenAI)</option>
               </select>
             </div>
-            
+
             <div>
               <label className="text-xs text-slate-400 font-medium block mb-1.5">Température ({settings.temperature})</label>
-              <input 
-                type="range" min="0" max="1" step="0.1" 
+              <input
+                type="range" min="0" max="1" step="0.1"
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-btpGreen"
                 value={settings.temperature}
                 onChange={e => setSettings(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
@@ -101,24 +99,24 @@ export function SettingsPage() {
             <Database size={16} className="text-btpCyan" />
             Paramètres RAG
           </h3>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="text-xs text-slate-400 font-medium block mb-1.5">Modèle d'Embeddings</label>
-              <select 
-                className="input-dark w-full" 
+              <select
+                className="input-dark w-full"
                 value={settings.embeddingModel}
                 onChange={e => setSettings(prev => ({ ...prev, embeddingModel: e.target.value }))}
               >
-                <option value="text-embedding-004">Google text-embedding-004</option>
+                <option value="text-embedding-004">Google text-embedding-001</option>
                 <option value="text-multilingual-embedding-002">Google multilingual-002</option>
               </select>
             </div>
             <div>
               <label className="text-xs text-slate-400 font-medium block mb-1.5">Taille des Chunks</label>
-              <input 
-                type="number" 
-                className="input-dark w-full" 
+              <input
+                type="number"
+                className="input-dark w-full"
                 value={settings.chunkSize}
                 onChange={e => setSettings(prev => ({ ...prev, chunkSize: parseInt(e.target.value) }))}
               />
@@ -126,9 +124,9 @@ export function SettingsPage() {
             </div>
             <div>
               <label className="text-xs text-slate-400 font-medium block mb-1.5">Chevauchement (Overlap)</label>
-              <input 
-                type="number" 
-                className="input-dark w-full" 
+              <input
+                type="number"
+                className="input-dark w-full"
                 value={settings.chunkOverlap}
                 onChange={e => setSettings(prev => ({ ...prev, chunkOverlap: parseInt(e.target.value) }))}
               />
@@ -136,9 +134,9 @@ export function SettingsPage() {
             </div>
             <div>
               <label className="text-xs text-slate-400 font-medium block mb-1.5">Top-K résultats</label>
-              <input 
-                type="number" 
-                className="input-dark w-full" 
+              <input
+                type="number"
+                className="input-dark w-full"
                 value={settings.topK}
                 onChange={e => setSettings(prev => ({ ...prev, topK: parseInt(e.target.value) }))}
               />
@@ -146,10 +144,10 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Save Button */}
         <div className="lg:col-span-2 flex justify-end">
-          <button 
+          <button
             onClick={handleSave}
             disabled={isSaving}
             className="btn-primary px-8 flex items-center gap-2"

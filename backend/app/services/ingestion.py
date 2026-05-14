@@ -134,22 +134,31 @@ def ingest_file(
         logger.warning("minio_upload_skip", error=str(e))
 
     # ── Step 4: Chunk + vectorize in Qdrant ────────────────────
+    # Configuration High-Resolution : 2200-2800 caractères + overlap 450
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=settings.chunk_size,
-        chunk_overlap=settings.chunk_overlap,
+        chunk_size=2500,
+        chunk_overlap=450,
         separators=["\n\n", "\n", ". ", " ", ""],
     )
     chunks = text_splitter.split_documents(raw_docs)
 
-    # Enrich each chunk with metadata
+    # Enrich chaque chunk avec des métadonnées riches
     enriched_chunks = []
     for i, chunk in enumerate(chunks):
+        # Extraction du titre de section (première ligne significative)
+        lines = [l for l in chunk.page_content.split('\n') if len(l.strip()) > 5]
+        section_title = lines[0][:120] if lines else "Section indéterminée"
+        
         chunk.metadata.update({
             "doc_id": doc_id,
+            "document_name": filename,
             "filename": filename,
+            "page_number": chunk.metadata.get("page", 0),
+            "section_title": section_title,
             "document_type": doc_type.value,
+            "type": doc_type.value,
             "project_id": project_id or "",
-            "lot": detected_lot or "",
+            "lot": detected_lot or "Général",
             "chunk_index": i,
             "total_chunks": len(chunks),
             "normes": ",".join(normes),

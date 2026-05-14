@@ -59,7 +59,7 @@ def get_collection_info(collection_name: str) -> dict:
         info = client.get_collection(collection_name)
         return {
             "name": collection_name,
-            "vectors_count": info.vectors_count,
+            "vectors_count": info.points_count, # Use points_count as a proxy for vectors in single-vector setups
             "points_count": info.points_count,
             "status": str(info.status),
         }

@@ -72,6 +72,7 @@ def semantic_search(
     k: int = 5,
     project_id: str | None = None,
     document_type: str | None = None,
+    doc_id: str | None = None,
 ) -> list[tuple[Document, float]]:
     """
     Perform semantic search with optional metadata filtering.
@@ -88,6 +89,10 @@ def semantic_search(
     if document_type:
         must_conditions.append(
             FieldCondition(key="metadata.document_type", match=MatchValue(value=document_type))
+        )
+    if doc_id:
+        must_conditions.append(
+            FieldCondition(key="metadata.doc_id", match=MatchValue(value=doc_id))
         )
 
     search_filter = Filter(must=must_conditions) if must_conditions else None
@@ -128,6 +133,7 @@ def multi_collection_search(
     query: str,
     k_per_collection: int = 3,
     project_id: str | None = None,
+    doc_id: str | None = None,
 ) -> list[tuple[Document, float, str]]:
     """Search across multiple collections and merge results."""
     all_results = []
@@ -138,6 +144,7 @@ def multi_collection_search(
                 collection_name=collection_name,
                 k=k_per_collection,
                 project_id=project_id,
+                doc_id=doc_id,
             )
             for doc, score in results:
                 all_results.append((doc, score, collection_name))
