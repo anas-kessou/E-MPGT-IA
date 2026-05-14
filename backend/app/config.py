@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     """Application configuration loaded from .env"""
 
     # ── Application ────────────────────────────────────────────
-    app_env: str = Field(default="development")
+    app_env: str = Field(default="production")
     app_log_level: str = Field(default="INFO")
-    cors_origins: str = Field(default="http://localhost:3000,http://localhost:5173")
+    cors_origins: str = Field(default="*")
 
     # ── Google AI / LLM ────────────────────────────────────────
     google_api_key: str = Field(default="")
