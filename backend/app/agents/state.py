@@ -33,6 +33,10 @@ class AgentState(TypedDict):
 
     # Conformity checks performed
     conformity_checks: list[dict]
+    
+    # Claim Verification (Anti-Hallucination)
+    verified_claims: list[dict]
+    confidence: int
 
     # Which agent processed this
     agent_used: str

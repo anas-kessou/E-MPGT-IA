@@ -19,10 +19,18 @@ export interface ConformityCheck {
   severity: 'info' | 'warning' | 'critical';
 }
 
+export interface VerifiedClaim {
+  statement: string;
+  status: 'SUPPORTED' | 'PARTIALLY_SUPPORTED' | 'UNSUPPORTED';
+  explanation: string;
+}
+
 export interface ChatResponse {
   reply: string;
   sources: SourceReference[];
   conformity: ConformityCheck[];
+  verified_claims?: VerifiedClaim[];
+  confidence?: number;
   agent_used: string;
   processing_time_ms: number;
   conversation_id: string;
@@ -34,6 +42,8 @@ export interface Message {
   content: string;
   sources?: SourceReference[];
   conformity?: ConformityCheck[];
+  verified_claims?: VerifiedClaim[];
+  confidence?: number;
   agent_used?: string;
   processing_time_ms?: number;
   timestamp?: string;

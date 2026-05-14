@@ -8,7 +8,7 @@ import asyncio
 import structlog
 from fastapi import APIRouter, HTTPException
 
-from app.models.chat import ChatRequest, ChatResponse, SourceReference, ConformityCheck
+from app.models.chat import ChatRequest, ChatResponse, SourceReference, ConformityCheck, VerifiedClaim
 from app.agents.supervisor import run_agent
 from app.database.postgres import get_session, QueryLog
 
@@ -82,6 +82,15 @@ async def chat_endpoint(request: ChatRequest):
             for c in result.get("conformity", [])
         ]
 
+        verified_claims = [
+            VerifiedClaim(
+                statement=c.get("statement", "N/A"),
+                status=c.get("status", "UNSUPPORTED"),
+                explanation=c.get("explanation", ""),
+            )
+            for c in result.get("verified_claims", [])
+        ]
+
         # Log query in background thread (non-blocking)
         loop = asyncio.get_event_loop()
         loop.run_in_executor(None, _log_query_background, request.message, result)
@@ -90,6 +99,8 @@ async def chat_endpoint(request: ChatRequest):
             reply=result["reply"],
             sources=sources,
             conformity=conformity,
+            verified_claims=verified_claims,
+            confidence=result.get("confidence", 0),
             agent_used=result.get("agent_used", "unknown"),
             processing_time_ms=result.get("processing_time_ms", 0),
             conversation_id=request.conversation_id or str(uuid.uuid4()),

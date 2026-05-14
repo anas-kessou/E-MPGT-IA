@@ -37,6 +37,8 @@ export function ChatPage() {
         content: data.reply,
         sources: data.sources,
         conformity: data.conformity,
+        verified_claims: data.verified_claims,
+        confidence: data.confidence,
         agent_used: data.agent_used,
         processing_time_ms: data.processing_time_ms,
       };
@@ -137,6 +139,30 @@ export function ChatPage() {
                 </div>
               )}
 
+              {/* Verified Claims (Anti-Hallucination) */}
+              {msg.verified_claims && msg.verified_claims.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-slate-700/50 space-y-2">
+                  <p className="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                    <ShieldAlert size={12} /> Vérification des Affirmations (Anti-Hallucination)
+                  </p>
+                  {msg.verified_claims.map((claim, i) => (
+                    <div key={i} className={`flex items-start gap-2 text-xs p-2 rounded-lg ${
+                      claim.status === 'SUPPORTED' ? 'bg-green-500/10 text-green-400' :
+                      claim.status === 'UNSUPPORTED' ? 'bg-red-500/10 text-red-400' :
+                      'bg-amber-500/10 text-amber-400'
+                    }`}>
+                      {claim.status === 'SUPPORTED' ? <CheckCircle2 size={14} className="shrink-0 mt-0.5" /> :
+                       claim.status === 'UNSUPPORTED' ? <AlertTriangle size={14} className="shrink-0 mt-0.5" /> :
+                       <Clock size={14} className="shrink-0 mt-0.5" />}
+                      <div>
+                        <span className="font-semibold">{claim.statement}</span>
+                        {claim.status !== 'SUPPORTED' && <p className="text-slate-400 mt-1">{claim.explanation}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Sources */}
               {msg.sources && msg.sources.length > 0 && (
                 <div className="mt-4 pt-3 border-t border-slate-700/50">
@@ -155,11 +181,22 @@ export function ChatPage() {
                 </div>
               )}
 
-              {/* Processing time */}
+              {/* Processing time & Confidence */}
               {msg.processing_time_ms && (
-                <p className="text-[10px] text-slate-600 mt-2 flex items-center gap-1">
-                  <Clock size={10} /> {(msg.processing_time_ms / 1000).toFixed(1)}s • Agent: {msg.agent_used}
-                </p>
+                <div className="mt-3 flex items-center gap-3">
+                  <p className="text-[10px] text-slate-600 flex items-center gap-1">
+                    <Clock size={10} /> {(msg.processing_time_ms / 1000).toFixed(1)}s • Agent: {msg.agent_used}
+                  </p>
+                  {msg.confidence !== undefined && (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      msg.confidence >= 80 ? 'bg-green-500/20 text-green-400' :
+                      msg.confidence >= 50 ? 'bg-amber-500/20 text-amber-400' :
+                      'bg-red-500/20 text-red-400'
+                    }`}>
+                      Confiance : {msg.confidence}%
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 

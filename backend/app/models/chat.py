@@ -30,12 +30,20 @@ class ConformityCheck(BaseModel):
     detail: str
     severity: str = "info"  # "info", "warning", "critical"
 
+class VerifiedClaim(BaseModel):
+    """Claim extracted and verified by the verification agent."""
+    statement: str
+    status: str # "SUPPORTED", "PARTIALLY_SUPPORTED", "UNSUPPORTED"
+    explanation: str
+
 
 class ChatResponse(BaseModel):
     """AI response with sources and metadata."""
     reply: str
     sources: list[SourceReference] = []
     conformity: list[ConformityCheck] = []
+    verified_claims: list[VerifiedClaim] = []
+    confidence: int = 0
     agent_used: str = "rag_agent"
     processing_time_ms: int = 0
     conversation_id: Optional[str] = None

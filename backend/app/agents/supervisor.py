@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.agents.state import AgentState
 from app.agents.rag_agent import rag_node
 from app.agents.conformity_agent import conformity_node
+from app.agents.verification_agent import verification_node
 
 logger = structlog.get_logger()
 
@@ -127,6 +128,7 @@ def build_agent_graph() -> StateGraph:
     # Add nodes
     workflow.add_node("classify_intent", classify_intent)
     workflow.add_node("rag_agent", rag_node)
+    workflow.add_node("verification_agent", verification_node)
     workflow.add_node("conformity_agent", conformity_node)
 
     # Set entry point
@@ -142,7 +144,10 @@ def build_agent_graph() -> StateGraph:
         },
     )
 
-    # After RAG, conditionally run conformity
+    # RAG always goes to Verification first to extract/verify claims and get confidence score
+    workflow.add_edge("rag_agent", "verification_agent")
+
+    # After Verification, conditionally run conformity
     def should_check_conformity(state: AgentState) -> str:
         intent = state.get("intent", "")
         if intent in ("question_technique", "verification_conformite"):
@@ -150,7 +155,7 @@ def build_agent_graph() -> StateGraph:
         return END
 
     workflow.add_conditional_edges(
-        "rag_agent",
+        "verification_agent",
         should_check_conformity,
         {
             "conformity_agent": "conformity_agent",
@@ -198,6 +203,8 @@ async def run_agent(
         "response": "",
         "sources": [],
         "conformity_checks": [],
+        "verified_claims": [],
+        "confidence": 0,
         "agent_used": "",
         "project_id": project_id,
         "processing_time_ms": 0,
@@ -212,6 +219,8 @@ async def run_agent(
         "reply": final_state.get("response", "Désolé, je n'ai pas pu traiter votre demande."),
         "sources": final_state.get("sources", []),
         "conformity": final_state.get("conformity_checks", []),
+        "verified_claims": final_state.get("verified_claims", []),
+        "confidence": final_state.get("confidence", 0),
         "agent_used": final_state.get("agent_used", "unknown"),
         "processing_time_ms": elapsed_ms,
         "intent": final_state.get("intent", "unknown"),

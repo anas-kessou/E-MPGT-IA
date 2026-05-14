@@ -19,8 +19,9 @@
 │  n8n Workflows · Webhooks · Human-in-the-Loop               │
 ├──────────────────────────────────────────────────────────────┤
 │                  COUCHE 2 — INTELLIGENCE IA                  │
-│  LangGraph Multi-Agents · RAG Avancé (Multi-Query)          │
-│  Agent Conformité DTU · Agent Synthèse · Superviseur        │
+│  LangGraph Multi-Agents · Parallel RAG Search (Multi-Query) |
+│  Agent Claim Verification · Agent Conformité DTU            │
+│  Agent Synthèse · Fast Superviseur                          │
 ├──────────────────────────────────────────────────────────────┤
 │                  COUCHE 1 — DATA FOUNDATION                  │
 │  Qdrant (Vecteurs) · Neo4j (Knowledge Graph)                │
@@ -29,16 +30,18 @@
 └──────────────────────────────────────────────────────────────┘
 ```
 
-## ✨ Fonctionnalités
+## ✨ Fonctionnalités & Optimisations de la v2.1
 
-- 🧠 **RAG Avancé** — Multi-query rewriting + compression contextuelle + GraphRAG
-- 🤖 **Multi-Agents LangGraph** — Superviseur → RAG → Conformité → Synthèse
-- ✅ **Vérification DTU/Normes** — LLM-as-a-Judge pour la conformité réglementaire
+- 🧠 **RAG Avancé & Rapide** — Multi-query rewriting parallèle, filtrage contextuel par seuil de score
+- 🛡️ **Claim Verification / Anti-Hallucination** — Agent spécialisé qui extrait, vérifie et valide les affirmations critiques vis-à-vis du contexte documenté, et repère les risques numériques (seuils, obligations).
+- ⚖️ **Score de Confiance** — Évaluation du degré de confiance (0-100%) affiché de manière transparente aux utilisateurs.
+- 🤖 **Multi-Agents LangGraph** — Superviseur → RAG → Verification Agent → Conformité → Synthèse
+- ✅ **Vérification DTU/Normes** — LLM-as-a-Judge avec modèles cachés (singleton LLM) pour des perfs maximales
 - 📊 **Dashboard Premium** — KPIs, activité, status des sources en temps réel
-- 📁 **Gestion Documentaire** — Upload drag & drop, indexation auto, métadonnées enrichies
+- 📁 **Gestion Documentaire** — Upload drag & drop, indexation auto, correction des décalages d'index (0-indexed fix)
 - 🕸️ **Knowledge Graph** — Exploration visuelle des relations projets/normes/documents
-- 📎 **Citations Strictes** — Chaque réponse cite ses sources avec numéro de page
-- 🔒 **Traçabilité Complète** — Audit logs de toutes les requêtes
+- 📎 **Citations Strictes et Honnêtes** — L'IA ne s'appuie *que* sur les métadonnées réelles. Aucune approximation ou fabrication de numéro de page n'est tolérée.
+- ⚡ **Background Processing** — Traçabilité et logs des requêtes exécutés de manière asynchrone pour une latence utilisateur nulle.
 
 ## 🛠️ Stack Technique
 
