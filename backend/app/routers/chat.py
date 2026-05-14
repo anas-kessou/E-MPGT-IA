@@ -1,8 +1,10 @@
 """
 Chat Router — Main AI conversation endpoint using LangGraph agents.
+Performance-optimized: background query logging, deduplicated sources.
 """
 
 import uuid
+import asyncio
 import structlog
 from fastapi import APIRouter, HTTPException
 
@@ -15,14 +17,41 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/api", tags=["Chat"])
 
 
+def _log_query_background(request_message, result):
+    """Log query to PostgreSQL — runs in background thread."""
+    try:
+        session = get_session()
+        log_record = QueryLog(
+            id=str(uuid.uuid4()),
+            user_query=request_message,
+            agent_used=result.get("agent_used", "unknown"),
+            response_summary=result["reply"][:500],
+            sources_used=[{
+                "doc": s.get("document_name"),
+                "page": s.get("page_number")
+            } for s in result.get("sources", [])],
+            processing_time_ms=result.get("processing_time_ms", 0),
+            project_id=None,
+            conformity_issues=[{
+                "norm": c.get("norm_reference"),
+                "status": c.get("status")
+            } for c in result.get("conformity", [])]
+        )
+        session.add(log_record)
+        session.commit()
+        session.close()
+    except Exception as log_err:
+        logger.warning("query_log_failed", error=str(log_err))
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """
     Main chat endpoint — Routes query through the LangGraph agent pipeline:
-    1. Intent Classification
-    2. Multi-Query RAG Retrieval
-    3. Contextual Compression
-    4. Response Generation
+    1. Intent Classification (fast keyword first, then LLM)
+    2. Multi-Query RAG Retrieval (parallel)
+    3. Score-based Filtering (replaces LLM compression)
+    4. Response Generation (strict grounding)
     5. Optional Conformity Verification
     """
     try:
@@ -53,30 +82,9 @@ async def chat_endpoint(request: ChatRequest):
             for c in result.get("conformity", [])
         ]
 
-        # ── Log Query in Postgres (Background / Fast) ──────────────
-        try:
-            session = get_session()
-            log_record = QueryLog(
-                id=str(uuid.uuid4()),
-                user_query=request.message,
-                agent_used=result.get("agent_used", "unknown"),
-                response_summary=result["reply"][:500],
-                sources_used=[{
-                    "doc": s.get("document_name"),
-                    "page": s.get("page_number")
-                } for s in result.get("sources", [])],
-                processing_time_ms=result.get("processing_time_ms", 0),
-                project_id=request.project_id,
-                conformity_issues=[{
-                    "norm": c.get("norm_reference"),
-                    "status": c.get("status")
-                } for c in result.get("conformity", [])]
-            )
-            session.add(log_record)
-            session.commit()
-            session.close()
-        except Exception as log_err:
-            logger.warning("query_log_failed", error=str(log_err))
+        # Log query in background thread (non-blocking)
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, _log_query_background, request.message, result)
 
         return ChatResponse(
             reply=result["reply"],

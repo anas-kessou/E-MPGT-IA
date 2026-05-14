@@ -1,6 +1,9 @@
 """
 Supervisor Agent — Routes queries to specialized agents
 and orchestrates the full LangGraph pipeline.
+
+Performance-optimized: cached graph, fast intent classification,
+smart routing to skip unnecessary agent calls.
 """
 
 import time
@@ -17,6 +20,22 @@ from app.agents.conformity_agent import conformity_node
 
 logger = structlog.get_logger()
 
+# ── Cached LLM for classification ─────────────────────────────────
+
+_classify_llm = None
+
+
+def _get_classify_llm():
+    global _classify_llm
+    if _classify_llm is None:
+        settings = get_settings()
+        _classify_llm = ChatGoogleGenerativeAI(
+            model=settings.llm_model,
+            temperature=0,
+        )
+    return _classify_llm
+
+
 # ── Intent Classification ──────────────────────────────────────────
 
 CLASSIFY_PROMPT = ChatPromptTemplate.from_messages([
@@ -31,17 +50,41 @@ Réponds avec UN SEUL mot-clé parmi les 4 options ci-dessus. Rien d'autre."""),
     ("human", "{query}"),
 ])
 
+# Fast keyword-based pre-classification to skip LLM call when obvious
+_KEYWORD_INTENTS = {
+    "verification_conformite": ["conformité", "conforme", "vérifier", "vérification", "non-conformité", "contrôle conformité"],
+    "synthese": ["synthèse", "résumé", "résumer", "rapport", "synthétiser", "récapitulatif"],
+    "recherche_document": ["chercher document", "trouver document", "où est le document", "quel document"],
+}
+
+
+def _fast_classify(query: str) -> str | None:
+    """Try keyword-based classification before calling LLM."""
+    q_lower = query.lower()
+    for intent, keywords in _KEYWORD_INTENTS.items():
+        if any(kw in q_lower for kw in keywords):
+            return intent
+    return None
+
 
 async def classify_intent(state: AgentState) -> AgentState:
     """Classify user intent to route to the right agent."""
-    settings = get_settings()
-    llm = ChatGoogleGenerativeAI(model=settings.llm_model, temperature=0)
+    query = state["user_query"]
+    
+    # Try fast keyword classification first
+    fast_intent = _fast_classify(query)
+    if fast_intent:
+        state["intent"] = fast_intent
+        logger.info("intent_classified_fast", intent=fast_intent, query=query[:60])
+        return state
+
+    # Fall back to LLM classification
+    llm = _get_classify_llm()
     chain = CLASSIFY_PROMPT | llm | StrOutputParser()
 
     try:
-        intent = await chain.ainvoke({"query": state["user_query"]})
+        intent = await chain.ainvoke({"query": query})
         intent = intent.strip().lower()
-        # Validate intent
         valid = {"question_technique", "verification_conformite", "synthese", "recherche_document"}
         if intent not in valid:
             intent = "question_technique"
@@ -49,7 +92,7 @@ async def classify_intent(state: AgentState) -> AgentState:
         intent = "question_technique"
 
     state["intent"] = intent
-    logger.info("intent_classified", intent=intent, query=state["user_query"][:60])
+    logger.info("intent_classified", intent=intent, query=query[:60])
     return state
 
 

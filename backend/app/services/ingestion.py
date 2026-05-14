@@ -149,11 +149,15 @@ def ingest_file(
         lines = [l for l in chunk.page_content.split('\n') if len(l.strip()) > 5]
         section_title = lines[0][:120] if lines else "Section indéterminée"
         
+        # PyPDFLoader uses 0-indexed "page" key → convert to 1-indexed
+        raw_page = chunk.metadata.get("page")
+        page_number = (raw_page + 1) if raw_page is not None else None
+        
         chunk.metadata.update({
             "doc_id": doc_id,
             "document_name": filename,
             "filename": filename,
-            "page_number": chunk.metadata.get("page", 0),
+            "page_number": page_number,
             "section_title": section_title,
             "document_type": doc_type.value,
             "type": doc_type.value,

@@ -13,6 +13,21 @@ from app.agents.state import AgentState
 
 logger = structlog.get_logger()
 
+# ── Cached LLM singleton ──────────────────────────────────────────
+
+_conformity_llm = None
+
+
+def _get_conformity_llm():
+    global _conformity_llm
+    if _conformity_llm is None:
+        settings = get_settings()
+        _conformity_llm = ChatGoogleGenerativeAI(
+            model=settings.llm_model,
+            temperature=0,  # Deterministic for conformity checks
+        )
+    return _conformity_llm
+
 CONFORMITY_PROMPT = ChatPromptTemplate.from_messages([
     ("system", """Tu es un expert vérificateur de conformité BTP. Ton rôle est d'analyser
 une réponse technique et de vérifier si elle est conforme aux normes et DTU applicables.
@@ -55,11 +70,7 @@ async def conformity_node(state: AgentState) -> AgentState:
         for r in retrieved_docs
     ])
 
-    settings = get_settings()
-    llm = ChatGoogleGenerativeAI(
-        model=settings.llm_model,
-        temperature=0,  # Deterministic for conformity checks
-    )
+    llm = _get_conformity_llm()
 
     chain = CONFORMITY_PROMPT | llm | StrOutputParser()
 
